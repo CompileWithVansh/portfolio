@@ -36,7 +36,7 @@ export default function Home() {
       <footer className="w-full py-12 border-t border-white/[0.05] bg-[#121212] relative z-20">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between">
           <div className="text-sm tracking-widest uppercase text-gray-500 font-medium mb-4 md:mb-0">
-            © {new Date().getFullYear()} // Vansh Gupta
+            © {new Date().getFullYear()} Vansh Gupta
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-400">
             <a href="mailto:vanshgupta7017@gmail.com" className="hover:text-white transition">vanshgupta7017@gmail.com</a>
