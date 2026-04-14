@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useScroll, useMotionValueEvent, MotionValue } from "framer-motion";
+import { useMotionValueEvent, MotionValue } from "framer-motion";
 
 interface ScrollyCanvasProps {
   scrollYProgress: MotionValue<number>;
