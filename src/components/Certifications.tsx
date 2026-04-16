@@ -32,7 +32,7 @@ const CERTIFICATIONS = [
 
 export default function Certifications() {
   return (
-    <section className="relative z-20 w-full bg-[#121212] py-24 px-6 md:px-12 lg:px-24 border-t border-white/[0.02]">
+    <section id="certifications" className="relative z-20 w-full bg-[#121212] py-24 px-6 md:px-12 lg:px-24 border-t border-white/[0.02]">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 50 }}

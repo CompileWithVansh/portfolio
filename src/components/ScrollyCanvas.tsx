@@ -11,45 +11,17 @@ const FRAME_COUNT = 90;
 
 export default function ScrollyCanvas({ scrollYProgress }: ScrollyCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imagesRef = useRef<HTMLImageElement[]>([]);
+  const imagesRef = useRef<(HTMLImageElement | null)[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Preload images
-  useEffect(() => {
-    const loadedImages: HTMLImageElement[] = [];
-    let loadedCount = 0;
-
-    const checkAllLoaded = () => {
-      loadedCount++;
-      if (loadedCount === FRAME_COUNT) {
-        imagesRef.current = loadedImages;
-        setIsLoaded(true);
-        // Draw the first frame initially
-        if (canvasRef.current && loadedImages[0]) {
-          drawFrame(loadedImages[0]);
-        }
-      }
-    };
-
-    for (let i = 0; i < FRAME_COUNT; i++) {
-      const img = new Image();
-      const frameNum = i.toString().padStart(2, "0");
-      img.src = `/sequence/frame_${frameNum}_delay-0.067s.png`;
-      
-      img.onload = checkAllLoaded;
-      img.onerror = checkAllLoaded; // Fail gracefully
-      
-      loadedImages.push(img);
-    }
-  }, []);
-
+  // Core drawing logic - responsive "cover" calculations
   const drawFrame = (img: HTMLImageElement) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: false }); // alpha: false improves rendering performance massively
     if (!ctx) return;
 
-    if (img.width === 0 || img.height === 0) return; // Skip broken images
+    if (img.width === 0 || img.height === 0) return;
 
     const { width, height } = canvas;
     const imgRatio = img.width / img.height;
@@ -68,51 +40,117 @@ export default function ScrollyCanvas({ scrollYProgress }: ScrollyCanvasProps) {
       offsetX = (width - drawWidth) / 2;
     }
 
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
+    // Let the canvas map 1:1 natively without aggressive software filters
     ctx.clearRect(0, 0, width, height);
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
   };
 
+  const updateCanvasSizeAndDraw = (img: HTMLImageElement | null) => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect();
+      
+      if (rect.width === 0 || rect.height === 0) return;
+
+      // DO NOT multiply by devicePixelRatio for raster PNGs. 
+      // The Canvas 2D API's internal software upscale filter is heavily muddy/blurry.
+      // By mapping 1:1 with CSS, the browser GPU uses high-fidelity bicubic scaling.
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      
+      if (img && img.complete) {
+        drawFrame(img);
+      }
+    }
+  };
+
+  // Preload images progressively
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (imagesRef.current.length === 0) {
+      imagesRef.current = new Array(FRAME_COUNT).fill(null);
+    }
+
+    const loadImage = (index: number) => {
+      return new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        const frameNum = index.toString().padStart(2, "0");
+        img.src = `/sequence/frame_${frameNum}_delay-0.067s.png`;
+        img.onload = () => {
+          if (!isCancelled) {
+            imagesRef.current[index] = img;
+          }
+          resolve(img);
+        };
+        img.onerror = reject;
+      });
+    };
+
+    const loadProgressively = async () => {
+      try {
+        const firstFrame = await loadImage(0);
+        if (isCancelled) return;
+        
+        updateCanvasSizeAndDraw(firstFrame);
+        setIsLoaded(true);
+
+        for (let i = 1; i < FRAME_COUNT; i++) {
+          if (isCancelled) break;
+          await loadImage(i).catch(() => {});
+        }
+      } catch (err) {
+        console.error("Failed to load initial frame", err);
+      }
+    };
+
+    loadProgressively();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    if (imagesRef.current.length !== FRAME_COUNT) return;
-    
-    // Map scroll progress (0 to 1) to frame index (0 to length - 1)
     const frameIndex = Math.min(
       FRAME_COUNT - 1,
       Math.floor(latest * FRAME_COUNT)
     );
     
-    const targetImage = imagesRef.current[frameIndex];
+    let targetImage: HTMLImageElement | null = null;
+    for (let i = frameIndex; i >= 0; i--) {
+      if (imagesRef.current[i]) {
+        targetImage = imagesRef.current[i] as HTMLImageElement;
+        break;
+      }
+    }
+    
     if (targetImage && targetImage.complete && targetImage.naturalHeight !== 0) {
-      requestAnimationFrame(() => drawFrame(targetImage));
+      requestAnimationFrame(() => drawFrame(targetImage as HTMLImageElement));
     }
   });
 
-  // Handle resize
+  // Handle window resizing to keep it constantly responsive
   useEffect(() => {
     const handleResize = () => {
-      const canvas = canvasRef.current;
-      if (canvas && isLoaded) {
-        // Set actual canvas size to match visual size for high DPI
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * window.devicePixelRatio;
-        canvas.height = rect.height * window.devicePixelRatio;
-        
-        // Redraw current frame
+      if (isLoaded) {
         const currentProgress = scrollYProgress.get();
         const frameIndex = Math.min(
           FRAME_COUNT - 1,
           Math.floor(currentProgress * FRAME_COUNT)
         );
-        const targetImage = imagesRef.current[frameIndex];
-        if (targetImage && targetImage.complete && targetImage.naturalHeight !== 0) {
-          drawFrame(targetImage);
+        
+        let targetImage: HTMLImageElement | null = null;
+        for (let i = frameIndex; i >= 0; i--) {
+          if (imagesRef.current[i]) {
+            targetImage = imagesRef.current[i] as HTMLImageElement;
+            break;
+          }
         }
+        updateCanvasSizeAndDraw(targetImage);
       }
     };
 
-    handleResize(); // Initial setup
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [isLoaded, scrollYProgress]);

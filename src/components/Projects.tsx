@@ -51,7 +51,7 @@ const PROJECTS = [
 
 export default function Projects() {
   return (
-    <section className="relative z-20 w-full bg-[#121212] py-32 px-6 md:px-12 lg:px-24">
+    <section id="projects" className="relative z-20 w-full bg-[#121212] py-32 px-6 md:px-12 lg:px-24">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 50 }}

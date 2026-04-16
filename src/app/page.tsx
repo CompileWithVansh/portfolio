@@ -9,6 +9,7 @@ import Experience from "@/components/Experience";
 import Education from "@/components/Education";
 import Certifications from "@/components/Certifications";
 import SkillsGrid from "@/components/SkillsGrid";
+import Navigation from "@/components/Navigation";
 
 export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -19,7 +20,8 @@ export default function Home() {
 
   return (
     <main className="w-full bg-[#121212] text-white font-sans">
-      <section ref={containerRef} className="relative h-[500vh] w-full">
+      <Navigation />
+      <section id="home" ref={containerRef} className="relative h-[500vh] w-full">
         <div className="sticky top-0 h-screen w-full overflow-hidden">
           <ScrollyCanvas scrollYProgress={scrollYProgress} />
           <Overlay scrollYProgress={scrollYProgress} />
