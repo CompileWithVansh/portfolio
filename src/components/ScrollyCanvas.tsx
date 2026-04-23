@@ -7,7 +7,7 @@ interface ScrollyCanvasProps {
   scrollYProgress: MotionValue<number>;
 }
 
-const FRAME_COUNT = 90;
+const FRAME_COUNT = 120;
 
 export default function ScrollyCanvas({ scrollYProgress }: ScrollyCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -75,8 +75,8 @@ export default function ScrollyCanvas({ scrollYProgress }: ScrollyCanvasProps) {
     const loadImage = (index: number) => {
       return new Promise<HTMLImageElement>((resolve, reject) => {
         const img = new Image();
-        const frameNum = index.toString().padStart(2, "0");
-        img.src = `/sequence/frame_${frameNum}_delay-0.067s.png`;
+        const frameNum = index.toString().padStart(3, "0");
+        img.src = `/sequence/frame_${frameNum}_delay-0.041s.png`;
         img.onload = () => {
           if (!isCancelled) {
             imagesRef.current[index] = img;

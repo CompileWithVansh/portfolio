@@ -1,10 +1,19 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Code2 } from "lucide-react";
+import { Code2, ExternalLink } from "lucide-react";
 import Image from "next/image";
 
 const PROJECTS = [
+  {
+    title: "Servd AI Recipe Hub",
+    category: "Full Stack AI App",
+    description: "A comprehensive AI-powered platform to generate recipes from pantry ingredients, featuring a Strapi backend, Next.js frontend, Clerk authentication, and Gemini AI integration.",
+    github: "https://github.com/CompileWithVansh/Servd-AI-Recipe-Hub",
+    link: "https://servdrecipe.vercel.app/",
+    image: "/projects/project_5.png",
+    fit: "contain"
+  },
   {
     title: "Remote Code Runner",
     category: "DevOps & Backend",
@@ -27,7 +36,7 @@ const PROJECTS = [
     image: "/projects/project_3.png"
   },
   {
-    title: "Disease Prediction",
+    title: "Cardiovascular Disease Prediction System",
     category: "Data Science",
     description: "Collaborated on a machine learning project using Python, Pandas, and Scikit-learn for health risk evaluation.",
     github: "https://github.com/CompileWithVansh",
@@ -83,7 +92,7 @@ export default function Projects() {
                   src={project.image} 
                   alt={project.title} 
                   fill 
-                  className="object-cover transition-transform duration-700 group-hover:scale-105" 
+                  className={`transition-transform duration-700 group-hover:scale-105 ${project.fit === 'contain' ? 'object-contain bg-black/40' : 'object-cover'}`} 
                 />
               </div>
 
@@ -98,10 +107,24 @@ export default function Projects() {
                   {project.description}
                 </p>
                 
-                <div className="mt-auto flex items-center gap-4 w-full pt-6 border-t border-white/[0.05] justify-end">
+                <div className="mt-auto flex items-center w-full pt-6 border-t border-white/[0.05]">
+                  {project.link && (
+                    <a 
+                      href={project.link} 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                      aria-label="View Live Project"
+                    >
+                      <ExternalLink className="w-5 h-5 mr-1" />
+                      View Project
+                    </a>
+                  )}
                   <a 
-                    href={project.github} 
-                    className="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                    href={project.github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white transition-colors ml-auto"
                     aria-label="View Source on GitHub"
                   >
                     <Code2 className="w-5 h-5 mr-1" />
