@@ -9,28 +9,28 @@ interface ScrollyCanvasProps {
 
 const FRAME_COUNT = 120;
 
+// Phase 1: keyframes spread evenly across the full animation (~every 12 frames)
+const KEYFRAMES = [0, 12, 24, 36, 48, 60, 72, 84, 96, 108, 119];
+
 export default function ScrollyCanvas({ scrollYProgress }: ScrollyCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<(HTMLImageElement | null)[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  // Track current scroll frame so phase 2 can prioritize nearby frames
+  const currentFrameRef = useRef(0);
 
-  // Core drawing logic - responsive "cover" calculations
   const drawFrame = (img: HTMLImageElement) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d", { alpha: false }); // alpha: false improves rendering performance massively
+    const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return;
-
     if (img.width === 0 || img.height === 0) return;
 
     const { width, height } = canvas;
     const imgRatio = img.width / img.height;
     const canvasRatio = width / height;
 
-    let drawWidth = width;
-    let drawHeight = height;
-    let offsetX = 0;
-    let offsetY = 0;
+    let drawWidth = width, drawHeight = height, offsetX = 0, offsetY = 0;
 
     if (canvasRatio > imgRatio) {
       drawHeight = width / imgRatio;
@@ -40,83 +40,89 @@ export default function ScrollyCanvas({ scrollYProgress }: ScrollyCanvasProps) {
       offsetX = (width - drawWidth) / 2;
     }
 
-    // Let the canvas map 1:1 natively without aggressive software filters
     ctx.clearRect(0, 0, width, height);
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
   };
 
   const updateCanvasSizeAndDraw = (img: HTMLImageElement | null) => {
     const canvas = canvasRef.current;
-    if (canvas) {
-      const rect = canvas.getBoundingClientRect();
-      
-      if (rect.width === 0 || rect.height === 0) return;
-
-      // DO NOT multiply by devicePixelRatio for raster PNGs. 
-      // The Canvas 2D API's internal software upscale filter is heavily muddy/blurry.
-      // By mapping 1:1 with CSS, the browser GPU uses high-fidelity bicubic scaling.
-      canvas.width = rect.width;
-      canvas.height = rect.height;
-      
-      if (img && img.complete) {
-        drawFrame(img);
-      }
-    }
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    if (img && img.complete) drawFrame(img);
   };
 
-  // Preload images progressively
+  const loadImage = (index: number, isCancelled: () => boolean) => {
+    return new Promise<HTMLImageElement>((resolve, reject) => {
+      // Already loaded — skip
+      if (imagesRef.current[index]) {
+        resolve(imagesRef.current[index] as HTMLImageElement);
+        return;
+      }
+      const img = new Image();
+      const frameNum = index.toString().padStart(3, "0");
+      img.src = `/sequence/frame_${frameNum}_delay-0.041s.png`;
+      img.onload = () => {
+        if (!isCancelled()) imagesRef.current[index] = img;
+        resolve(img);
+      };
+      img.onerror = reject;
+    });
+  };
+
   useEffect(() => {
-    let isCancelled = false;
+    let cancelled = false;
+    const isCancelled = () => cancelled;
 
     if (imagesRef.current.length === 0) {
       imagesRef.current = new Array(FRAME_COUNT).fill(null);
     }
 
-    const loadImage = (index: number) => {
-      return new Promise<HTMLImageElement>((resolve, reject) => {
-        const img = new Image();
-        const frameNum = index.toString().padStart(3, "0");
-        img.src = `/sequence/frame_${frameNum}_delay-0.041s.png`;
-        img.onload = () => {
-          if (!isCancelled) {
-            imagesRef.current[index] = img;
-          }
-          resolve(img);
-        };
-        img.onerror = reject;
-      });
-    };
-
-    const loadProgressively = async () => {
+    const run = async () => {
       try {
-        const firstFrame = await loadImage(0);
-        if (isCancelled) return;
-        
+        // --- Phase 1: load frame 0 immediately, show it ---
+        const firstFrame = await loadImage(0, isCancelled);
+        if (cancelled) return;
         updateCanvasSizeAndDraw(firstFrame);
         setIsLoaded(true);
 
-        for (let i = 1; i < FRAME_COUNT; i++) {
-          if (isCancelled) break;
-          await loadImage(i).catch(() => {});
+        // --- Phase 1 continued: load remaining keyframes in parallel ---
+        await Promise.all(
+          KEYFRAMES.slice(1).map((i) => loadImage(i, isCancelled).catch(() => {}))
+        );
+        if (cancelled) return;
+
+        // --- Phase 2: fill gaps outward from current scroll position ---
+        // Build list of all unloaded frames sorted by distance from current frame
+        const remaining = Array.from({ length: FRAME_COUNT }, (_, i) => i)
+          .filter((i) => !imagesRef.current[i]);
+
+        remaining.sort(
+          (a, b) =>
+            Math.abs(a - currentFrameRef.current) -
+            Math.abs(b - currentFrameRef.current)
+        );
+
+        for (const i of remaining) {
+          if (cancelled) break;
+          await loadImage(i, isCancelled).catch(() => {});
         }
       } catch (err) {
         console.error("Failed to load initial frame", err);
       }
     };
 
-    loadProgressively();
-
-    return () => {
-      isCancelled = true;
-    };
+    run();
+    return () => { cancelled = true; };
   }, []);
 
   useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    const frameIndex = Math.min(
-      FRAME_COUNT - 1,
-      Math.floor(latest * FRAME_COUNT)
-    );
-    
+    const frameIndex = Math.min(FRAME_COUNT - 1, Math.floor(latest * FRAME_COUNT));
+    currentFrameRef.current = frameIndex;
+
+    // Walk backwards to find nearest loaded frame
     let targetImage: HTMLImageElement | null = null;
     for (let i = frameIndex; i >= 0; i--) {
       if (imagesRef.current[i]) {
@@ -124,33 +130,22 @@ export default function ScrollyCanvas({ scrollYProgress }: ScrollyCanvasProps) {
         break;
       }
     }
-    
+
     if (targetImage && targetImage.complete && targetImage.naturalHeight !== 0) {
       requestAnimationFrame(() => drawFrame(targetImage as HTMLImageElement));
     }
   });
 
-  // Handle window resizing to keep it constantly responsive
   useEffect(() => {
     const handleResize = () => {
-      if (isLoaded) {
-        const currentProgress = scrollYProgress.get();
-        const frameIndex = Math.min(
-          FRAME_COUNT - 1,
-          Math.floor(currentProgress * FRAME_COUNT)
-        );
-        
-        let targetImage: HTMLImageElement | null = null;
-        for (let i = frameIndex; i >= 0; i--) {
-          if (imagesRef.current[i]) {
-            targetImage = imagesRef.current[i] as HTMLImageElement;
-            break;
-          }
-        }
-        updateCanvasSizeAndDraw(targetImage);
+      if (!isLoaded) return;
+      const frameIndex = Math.min(FRAME_COUNT - 1, Math.floor(scrollYProgress.get() * FRAME_COUNT));
+      let targetImage: HTMLImageElement | null = null;
+      for (let i = frameIndex; i >= 0; i--) {
+        if (imagesRef.current[i]) { targetImage = imagesRef.current[i] as HTMLImageElement; break; }
       }
+      updateCanvasSizeAndDraw(targetImage);
     };
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [isLoaded, scrollYProgress]);

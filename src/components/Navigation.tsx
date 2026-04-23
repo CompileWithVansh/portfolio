@@ -30,44 +30,14 @@ export default function Navigation() {
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
-  // Custom slow smooth scroll to display the background animation
-  const slowScrollTo = (targetId: string, duration: number = 2000) => {
-    const targetElement = document.querySelector(targetId);
-    if (!targetElement) return;
-
-    const targetPosition = targetElement.getBoundingClientRect().top + window.scrollY;
-    const startPosition = window.scrollY;
-    const distance = targetPosition - startPosition;
-    let startTime: number | null = null;
-
-    const animation = (currentTime: number) => {
-      if (startTime === null) startTime = currentTime;
-      const timeElapsed = currentTime - startTime;
-      const progress = Math.min(timeElapsed / duration, 1);
-      
-      // Easing function (easeInOutCubic) for a very cinematic feel
-      const ease = progress < 0.5 
-        ? 4 * progress * progress * progress 
-        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-
-      window.scrollTo(0, startPosition + distance * ease);
-
-      if (timeElapsed < duration) {
-        requestAnimationFrame(animation);
-      }
-    };
-
-    requestAnimationFrame(animation);
-  };
-
   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
     setIsOpen(false);
     
-    // Wait for menu exit animation before triggering the slow scroll
     setTimeout(() => {
-      slowScrollTo(href, 2200); // 2.2 seconds scroll duration 
-    }, 400); 
+      const target = document.querySelector(href);
+      if (target) target.scrollIntoView({ behavior: "instant" });
+    }, 400);
   };
 
   return (

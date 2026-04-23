@@ -21,7 +21,7 @@ export default function Home() {
   return (
     <main className="w-full bg-[#121212] text-white font-sans">
       <Navigation />
-      <section id="home" ref={containerRef} className="relative h-[300vh] w-full">
+      <section id="home" ref={containerRef} className="relative h-[200vh] w-full">
         <div className="sticky top-0 h-screen w-full overflow-hidden">
           <ScrollyCanvas scrollYProgress={scrollYProgress} />
           <Overlay scrollYProgress={scrollYProgress} />

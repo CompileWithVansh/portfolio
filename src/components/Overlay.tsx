@@ -12,57 +12,21 @@ interface OverlayProps {
 
 export default function Overlay({ scrollYProgress }: OverlayProps) {
 
-  // =========================
-  // HARD CUT OPACITY (NO GHOST TEXT)
-  // =========================
-
-  // SECTION 1
-  const opacity1 = useTransform(
-    scrollYProgress,
-    [0, 0.2, 0.21, 0.45],
-    [1, 0, 0, 0]
-  );
-
-  const y1 = useTransform(
-    scrollYProgress,
-    [0, 0.2],
-    [0, -50]
-  );
-
-  const pointerEvents1 = useTransform(
-    scrollYProgress,
-    [0, 0.2, 0.21],
-    ["auto", "auto", "none"]
-  );
-
-  // SECTION 2
-  const opacity2 = useTransform(
-    scrollYProgress,
-    [0.2, 0.3, 0.45, 0.46, 0.5],
-    [0, 1, 0, 0, 0]
-  );
-
-  // SECTION 3
-  const opacity3 = useTransform(
-    scrollYProgress,
-    [0.35, 0.5, 0.51],
-    [0, 1, 1]
-  );
+  const opacity1 = useTransform(scrollYProgress, [0, 0.55, 0.6], [1, 1, 0]);
+  const y1 = useTransform(scrollYProgress, [0.55, 0.6], [0, -40]);
+  const pointerEvents1 = useTransform(scrollYProgress, [0, 0.59, 0.6], ["auto", "auto", "none"]);
 
   return (
-    <div className="absolute inset-0 z-[999] pointer-events-none">
+    <div className="absolute inset-0 z-[999] pointer-events-none overflow-hidden">
 
-      {/* ========================= */}
-      {/* SECTION 1 (CENTER) */}
-      {/* ========================= */}
       <motion.div
         style={{ opacity: opacity1, y: y1, position: 'absolute', inset: 0, pointerEvents: pointerEvents1 as never }}
-        className="flex flex-col items-center justify-center w-full px-4"
+        className="flex flex-col items-center justify-center w-full px-6"
       >
-        <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-white mb-4 text-center mix-blend-difference drop-shadow-2xl">
+        <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight text-white mb-3 text-center mix-blend-difference drop-shadow-2xl leading-tight">
           Vansh Gupta
         </h1>
-        <p className="text-lg sm:text-xl md:text-2xl text-gray-300 font-medium tracking-wide text-center mix-blend-difference drop-shadow-2xl mb-8 max-w-2xl">
+        <p className="text-sm sm:text-xl md:text-2xl text-gray-300 font-medium tracking-wide text-center mix-blend-difference drop-shadow-2xl mb-8 max-w-xs sm:max-w-lg md:max-w-2xl px-2">
           Full Stack Developer | Embedded Software Engineer
         </p>
         <a
@@ -75,7 +39,6 @@ export default function Overlay({ scrollYProgress }: OverlayProps) {
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition duration-500" />
         </a>
 
-        {/* Scroll Down Indicator */}
         <motion.div
           animate={{ y: [0, 10, 0] }}
           transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
@@ -86,34 +49,6 @@ export default function Overlay({ scrollYProgress }: OverlayProps) {
           </span>
           <div className="w-[1px] h-12 bg-gradient-to-b from-white/80 to-transparent mix-blend-difference" />
         </motion.div>
-      </motion.div>
-
-      {/* ========================= */}
-      {/* SECTION 2 (LEFT) */}
-      {/* ========================= */}
-      <motion.div
-        style={{ opacity: opacity2 }}
-        className="absolute inset-0 flex items-center justify-center md:justify-start px-6 md:px-[10%]"
-      >
-        <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-white leading-tight text-center md:text-left max-w-2xl drop-shadow-xl">
-          I build efficient,
-          <br />
-          scalable solutions.
-        </h2>
-      </motion.div>
-
-      {/* ========================= */}
-      {/* SECTION 3 (RIGHT) */}
-      {/* ========================= */}
-      <motion.div
-        style={{ opacity: opacity3 }}
-        className="absolute inset-0 flex items-center justify-center md:justify-end px-6 md:px-[10%]"
-      >
-        <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-white leading-tight text-center md:text-right max-w-2xl drop-shadow-xl">
-          Bridging software
-          <br />
-          and hardware.
-        </h2>
       </motion.div>
 
     </div>

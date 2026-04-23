@@ -19,21 +19,21 @@ const PROJECTS = [
     category: "DevOps & Backend",
     description: "Engineered an architecture to execute code securely in isolated environments using Docker containerization.",
     github: "https://github.com/CompileWithVansh",
-    image: "/projects/project_1.png"
+    image: "/projects/remote_code_runner.png"
   },
   {
     title: "Smart Parking System",
     category: "IoT & Hardware",
     description: "Designed an automated IoT system using dual Arduino boards and IR sensors for real-time vehicle tracking.",
     github: "https://github.com/CompileWithVansh",
-    image: "/projects/project_2.png"
+    image: "/projects/smart_parking.png"
   },
   {
     title: "Voice to Text Generator",
     category: "Machine Learning",
     description: "Developed a tool to accurately transcribe spoken audio into text using specialized libraries.",
     github: "https://github.com/CompileWithVansh",
-    image: "/projects/project_3.png"
+    image: "/projects/voice_to_text.png"
   },
   {
     title: "Cardiovascular Disease Prediction System",
@@ -49,13 +49,13 @@ const PROJECTS = [
     github: "https://github.com/CompileWithVansh",
     image: "/projects/project_1.png"
   },
-  {
-    title: "Multilingual Translator",
-    category: "NLP Tooling",
-    description: "Built a translation application capable of processing and converting text across multiple languages.",
-    github: "https://github.com/CompileWithVansh",
-    image: "/projects/project_2.png"
-  }
+  // {
+  //   title: "Multilingual Translator",
+  //   category: "NLP Tooling",
+  //   description: "Built a translation application capable of processing and converting text across multiple languages.",
+  //   github: "https://github.com/CompileWithVansh",
+  //   image: "/projects/project_2.png"
+  // }
 ];
 
 export default function Projects() {
@@ -92,7 +92,7 @@ export default function Projects() {
                   src={project.image} 
                   alt={project.title} 
                   fill 
-                  className={`transition-transform duration-700 group-hover:scale-105 ${project.fit === 'contain' ? 'object-contain bg-black/40' : 'object-cover'}`} 
+                  className={`transition-transform duration-700 group-hover:scale-105 ${project.fit === 'contain' ? 'object-contain bg-white' : 'object-cover'}`} 
                 />
               </div>
 
