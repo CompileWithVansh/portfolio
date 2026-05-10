@@ -21,7 +21,7 @@ const SKILL_CATEGORIES = [
   },
   {
     title: "Databases",
-    skills: ["MySQL", "MongoDB"]
+    skills: ["MySQL", "MongoDB", "PostgreSQL"]
   },
   {
     title: "Personal Attributes",
